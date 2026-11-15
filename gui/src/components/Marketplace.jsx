@@ -348,16 +348,23 @@ export default function Marketplace({ initialType }) {
     }
   };
 
-  const handleAction = async (taskType, provider) => {
+  const handleAction = async (taskType, provider, isReinstall = false) => {
     const providerId =
       provider.uniqueId ||
       `${provider.repoId || `${provider.repoOwner || "TheYogMehta"}/${provider.repoName || "repo"}`}/${provider.name}`;
 
     if (taskType === "remove") {
       const confirmResult = await swalConfirm(
-        "Are you sure?",
-        `Do you want to delete "${provider.name}" (by @${provider.repoOwner || "TheYogMehta"})?`,
-        "Continue",
+        "Uninstall Scraper?",
+        `Do you want to uninstall "${provider.name}" (by @${provider.repoOwner || "TheYogMehta"})?`,
+        "Uninstall",
+      );
+      if (!confirmResult.isConfirmed) return;
+    } else if (isReinstall) {
+      const confirmResult = await swalConfirm(
+        "Reinstall Scraper?",
+        `Do you want to reinstall "${provider.name}" (by @${provider.repoOwner || "TheYogMehta"})?`,
+        "Reinstall",
       );
       if (!confirmResult.isConfirmed) return;
     }
@@ -391,17 +398,38 @@ export default function Marketplace({ initialType }) {
       }
 
       if (res && res.type === "success") {
-        swalSuccess(
-          "Success",
-          res.message || `${provider.name} was processed successfully.`,
-        );
+        const actionTitle =
+          taskType === "remove"
+            ? "Scraper Uninstalled"
+            : isReinstall
+              ? "Scraper Reinstalled"
+              : "Scraper Installed";
+        const defaultMsg =
+          taskType === "remove"
+            ? `"${provider.name}" has been uninstalled successfully.`
+            : isReinstall
+              ? `"${provider.name}" has been reinstalled successfully.`
+              : `"${provider.name}" has been installed successfully.`;
+        swalSuccess(actionTitle, res.message || defaultMsg);
         fetchMarketplace();
       } else {
-        swalError("Error", res?.message || "Error performing scraper task.");
+        const errTitle =
+          taskType === "remove"
+            ? "Failed to Uninstall Scraper"
+            : isReinstall
+              ? "Failed to Reinstall Scraper"
+              : "Failed to Install Scraper";
+        swalError(errTitle, res?.message || "Error performing scraper task.");
       }
     } catch (err) {
       console.error(err);
-      swalError("Action Failed", err.message || "Scraper operation failed.");
+      const errTitle =
+        taskType === "remove"
+          ? "Failed to Uninstall Scraper"
+          : isReinstall
+            ? "Failed to Reinstall Scraper"
+            : "Failed to Install Scraper";
+      swalError(errTitle, err.message || "Scraper operation failed.");
     } finally {
       setProcessingId(null);
     }
@@ -411,7 +439,7 @@ export default function Marketplace({ initialType }) {
     const { value: rawInput } = await Swal.fire({
       background: "var(--bg-secondary)",
       color: "var(--text-main)",
-      title: "Add Extension Source",
+      title: "Add Source",
       html: `
         <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5;">
           Enter a GitHub repository (e.g. <code>username/repository</code> or full link) or a direct URL to a <code>marketplace.json</code> file.
@@ -420,7 +448,7 @@ export default function Marketplace({ initialType }) {
       input: "text",
       inputPlaceholder: "username/repository or https://github.com/...",
       showCancelButton: true,
-      confirmButtonText: "Add Repository",
+      confirmButtonText: "Add Source",
       confirmButtonColor: "var(--accent)",
       cancelButtonColor: "var(--bg-tertiary)",
       inputValidator: (value) => {
@@ -468,15 +496,15 @@ export default function Marketplace({ initialType }) {
 
         if (res && res.success) {
           swalSuccess(
-            "Repository Added!",
+            "Source Added!",
             `Successfully loaded extensions from @${res.repo?.owner || "creator"}.`,
           );
           fetchMarketplace();
         } else {
-          swalError("Failed to Add Repository", res?.error || "Unknown error");
+          swalError("Failed to Add Source", res?.error || "Unknown error");
         }
       } catch (err) {
-        swalError("Failed to Add Repository", err.message);
+        swalError("Failed to Add Source", err.message);
       } finally {
         setLoading(false);
       }
@@ -494,8 +522,8 @@ export default function Marketplace({ initialType }) {
 
     const confirm = await swalConfirm(
       "Delete Source?",
-      `Do you want to delete <code>${repoDisplayName}</code>? Installed extensions from this repository will remain on your device.`,
-      "Confirm",
+      `Do you want to delete <code>${repoDisplayName}</code>? Installed scrapers from this source will remain on your device.`,
+      "Delete Source",
     );
     if (!confirm.isConfirmed) return;
 
@@ -517,13 +545,13 @@ export default function Marketplace({ initialType }) {
 
       if (res && res.success) {
         swalSuccess(
-          "Repository Deleted",
-          `Repository <code>${repoDisplayName}</code> has been deleted.`,
+          "Source Deleted",
+          `Source <code>${repoDisplayName}</code> has been deleted.`,
         );
         fetchMarketplace();
       }
     } catch (err) {
-      swalError("Failed to Remove Repository", err.message);
+      swalError("Failed to Delete Source", err.message);
     } finally {
       setLoading(false);
     }
@@ -548,13 +576,13 @@ export default function Marketplace({ initialType }) {
 
       if (res && res.success) {
         swalSuccess(
-          "Official Repository Restored",
-          "Official StrawVerse extensions repository has been added back.",
+          "Official Source Restored",
+          "Official StrawVerse extensions source has been restored.",
         );
         fetchMarketplace();
       }
     } catch (err) {
-      swalError("Failed to Restore Repository", err.message);
+      swalError("Failed to Restore Source", err.message);
     } finally {
       setLoading(false);
     }
@@ -613,7 +641,7 @@ export default function Marketplace({ initialType }) {
             <button
               onClick={handleAddRepository}
               className="btn-header-action btn-add-repo-primary"
-              title="Add a custom extension repository"
+              title="Add a custom extension source"
             >
               <Plus size={16} />
               <span>Add Source</span>
@@ -622,7 +650,7 @@ export default function Marketplace({ initialType }) {
             <button
               onClick={() => setShowRepoModal(true)}
               className="btn-header-action"
-              title="Manage extension repositories"
+              title="Manage extension sources"
             >
               <FolderGit2 size={16} />
               <span>Sources ({repos.length})</span>
@@ -633,9 +661,9 @@ export default function Marketplace({ initialType }) {
                 value={selectedRepoFilter}
                 onChange={(e) => setSelectedRepoFilter(e.target.value)}
                 className="repo-filter-select"
-                title="Filter extensions by repository"
+                title="Filter extensions by source"
               >
-                <option value="all">All Repositories ({repos.length})</option>
+                <option value="all">All Sources ({repos.length})</option>
                 {repos.map((r) => {
                   const val = r.id || `${r.owner}/${r.name}`;
                   const label = r.name ? `${r.owner}/${r.name}` : `@${r.owner}`;
@@ -654,13 +682,13 @@ export default function Marketplace({ initialType }) {
       {loading ? (
         <div className="market-loading-center">
           <img src="/images/loading.gif" alt="loading" />
-          <p>Connecting to extension repositories...</p>
+          <p>Connecting to extension sources...</p>
         </div>
       ) : (
         <div className="market-grid">
           {visibleExtensions.length === 0 ? (
             <div className="market-loading-center">
-              <p>No extensions available in active repositories.</p>
+              <p>No extensions available in active sources.</p>
             </div>
           ) : (
             visibleExtensions.map((provider) => {
@@ -707,7 +735,7 @@ export default function Marketplace({ initialType }) {
                         <h3 className="market-card-title">{provider.name}</h3>
                         <span
                           className={`market-repo-badge ${isOfficial ? "official" : ""}`}
-                          title={`Repository: ${provider.repoName ? `${provider.repoOwner}/${provider.repoName}` : `@${provider.repoOwner || "TheYogMehta"}`}`}
+                          title={`Source: ${provider.repoName ? `${provider.repoOwner}/${provider.repoName}` : `@${provider.repoOwner || "TheYogMehta"}`}`}
                         >
                           {provider.repoName
                             ? `${provider.repoOwner}/${provider.repoName}`
@@ -816,9 +844,9 @@ export default function Marketplace({ initialType }) {
                               </button>
                             ) : (
                               <button
-                                onClick={() => handleAction("add", provider)}
+                                onClick={() => handleAction("add", provider, true)}
                                 className="btn-reinstall"
-                                title="Reinstall current version"
+                                title="Reinstall Scraper"
                               >
                                 Reinstall
                               </button>
@@ -826,8 +854,9 @@ export default function Marketplace({ initialType }) {
                           <button
                             onClick={() => handleAction("remove", provider)}
                             className="btn-remove"
+                            title="Uninstall Scraper"
                           >
-                            Remove
+                            Uninstall
                           </button>
                         </div>
                       </>
@@ -835,6 +864,7 @@ export default function Marketplace({ initialType }) {
                       <button
                         onClick={() => handleAction("add", provider)}
                         className="btn-install"
+                        title="Install Scraper"
                       >
                         <Download size={14} />
                         <span>Install Scraper</span>
@@ -848,7 +878,7 @@ export default function Marketplace({ initialType }) {
         </div>
       )}
 
-      {/* Repositories Modal */}
+      {/* Sources Modal */}
       {showRepoModal && (
         <div
           className="repo-modal-backdrop"
@@ -859,7 +889,7 @@ export default function Marketplace({ initialType }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="repo-modal-header">
-              <h2>Extension Repositories</h2>
+              <h2>Extension Sources</h2>
               <button
                 onClick={() => setShowRepoModal(false)}
                 className="btn-remove-repo"
@@ -879,11 +909,11 @@ export default function Marketplace({ initialType }) {
                   }}
                 >
                   <p style={{ fontWeight: 600, fontSize: "14px" }}>
-                    No extension repositories active.
+                    No extension sources active.
                   </p>
                   <p style={{ fontSize: "12px", marginTop: "6px" }}>
-                    Add a custom GitHub repository or restore the official
-                    repository below.
+                    Add a custom GitHub source or restore the official
+                    source below.
                   </p>
                 </div>
               ) : (
@@ -914,7 +944,7 @@ export default function Marketplace({ initialType }) {
                       <button
                         onClick={() => handleRemoveRepository(repo)}
                         className="btn-remove-repo"
-                        title={`Remove ${repo.isDefault ? "official" : "custom"} repository`}
+                        title={`Delete ${repo.isDefault ? "official" : "custom"} source`}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -939,10 +969,10 @@ export default function Marketplace({ initialType }) {
                   onClick={handleRestoreDefaultRepository}
                   className="btn-header-action"
                   style={{ borderRadius: 8 }}
-                  title="Add back the official StrawVerse extensions repository"
+                  title="Add back the official StrawVerse extensions source"
                 >
                   <RotateCcw size={14} />
-                  <span>Restore Official Repo</span>
+                  <span>Restore Official Source</span>
                 </button>
               ) : (
                 <div />
@@ -956,7 +986,7 @@ export default function Marketplace({ initialType }) {
                 style={{ borderRadius: 8 }}
               >
                 <Plus size={14} />
-                <span>Add Another Repository</span>
+                <span>Add Another Source</span>
               </button>
             </div>
           </div>

@@ -1872,16 +1872,16 @@ async function HandleExtensions(
 
       return {
         type: "success",
-        title: `Removed ${canonicalType} Extension!`,
-        message: `${ExtensionName} (by @${RepoOwner}) is removed successfully`,
+        title: `Uninstalled ${canonicalType} Extension!`,
+        message: `"${ExtensionName}" (by @${RepoOwner}) has been uninstalled successfully`,
       };
     } catch (err) {
       logger.error(
-        `Failed to remove scraper ${ExtensionName} (@${RepoOwner}): ${err.message}`,
+        `Failed to uninstall scraper ${ExtensionName} (@${RepoOwner}): ${err.message}`,
       );
       return {
         type: "error",
-        title: `Failed to Remove ${canonicalType} Extension!`,
+        title: `Failed to Uninstall ${canonicalType} Extension!`,
         message: err.message,
       };
     }
