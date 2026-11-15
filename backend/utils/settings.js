@@ -760,6 +760,21 @@ function parseExtensionRepoUrl(inputUrl) {
   }
   let cleanUrl = inputUrl.trim();
 
+  // If input is shorthand GITUSERNAME/REPONAME (or @owner/repo, or github.com/owner/repo), auto-complete to full GitHub URL
+  const cleanShorthand = cleanUrl.replace(/^@/, "").trim();
+  if (/^(?:www\.)?github\.com\//i.test(cleanShorthand)) {
+    cleanUrl = `https://${cleanShorthand.replace(/^www\./i, "")}`;
+  } else if (!/^https?:\/\//i.test(cleanShorthand)) {
+    const segs = cleanShorthand.split("/").filter(Boolean);
+    if (segs.length === 2) {
+      cleanUrl = `https://github.com/${segs[0]}/${segs[1]}`;
+    } else if (segs.length === 3) {
+      cleanUrl = `https://github.com/${segs[0]}/${segs[1]}/tree/${segs[2]}`;
+    } else if (segs.length === 4 && segs[2] === "tree") {
+      cleanUrl = `https://github.com/${segs[0]}/${segs[1]}/tree/${segs[3]}`;
+    }
+  }
+
   // Pattern 1: GitHub repository URL (e.g. https://github.com/owner/repo or https://github.com/owner/repo/tree/branch)
   // Strip trailing slashes and .git
   const normalizedGh = cleanUrl.replace(/\.git\/?$/i, "").replace(/\/+$/, "");
@@ -1795,7 +1810,7 @@ async function HandleExtensions(
       return {
         type: "success",
         title: `Added ${canonicalType} Extension!`,
-        message: `${ExtensionName} (by @${RepoOwner}) is added successfully`,
+        message: `\"${ExtensionName}\" (by @${RepoOwner}) has been installed successfully`,
       };
     } catch (err) {
       logger.error(

@@ -356,8 +356,8 @@ export default function Marketplace({ initialType }) {
     if (taskType === "remove") {
       const confirmResult = await swalConfirm(
         "Are you sure?",
-        `Do you want to remove ${provider.name} (by @${provider.repoOwner || "TheYogMehta"})?`,
-        "Yes, remove it",
+        `Do you want to delete "${provider.name}" (by @${provider.repoOwner || "TheYogMehta"})?`,
+        "Continue",
       );
       if (!confirmResult.isConfirmed) return;
     }
@@ -408,30 +408,49 @@ export default function Marketplace({ initialType }) {
   };
 
   const handleAddRepository = async () => {
-    const { value: url } = await Swal.fire({
+    const { value: rawInput } = await Swal.fire({
       background: "var(--bg-secondary)",
       color: "var(--text-main)",
-      title: "Add Extension Repository",
+      title: "Add Extension Source",
       html: `
         <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5;">
-          Enter a GitHub repository link or a direct raw URL to <code>marketplace.json</code>.
-          Extensions will be installed under <code>/${activeType}/&lt;OWNER&gt;/</code>.
+          Enter a GitHub repository (e.g. <code>username/repository</code> or full link) or a direct URL to a <code>marketplace.json</code> file.
         </p>
       `,
-      input: "url",
-      inputPlaceholder: "https://github.com/username/my-strawverse-extensions",
+      input: "text",
+      inputPlaceholder: "username/repository or https://github.com/...",
       showCancelButton: true,
       confirmButtonText: "Add Repository",
       confirmButtonColor: "var(--accent)",
       cancelButtonColor: "var(--bg-tertiary)",
       inputValidator: (value) => {
         if (!value || !value.trim()) {
-          return "Please enter a valid repository URL!";
+          return "Please enter a valid repository name or URL!";
         }
       },
     });
 
-    if (url) {
+    if (rawInput) {
+      let url = rawInput.trim();
+
+      // Support GITUSERNAME/REPONAME shorthand (and variations like @owner/repo, owner/repo/branch, or github.com/owner/repo)
+      // Auto-completes to full link: https://github.com/GITUSERNAME/REPONAME
+      const cleanShorthand = url.replace(/^@/, "").trim();
+      if (/^(?:www\.)?github\.com\//i.test(cleanShorthand)) {
+        url = `https://${cleanShorthand.replace(/^www\./i, "")}`;
+      } else if (!/^https?:\/\//i.test(cleanShorthand)) {
+        const segs = cleanShorthand.split("/").filter(Boolean);
+        if (segs.length === 2) {
+          // GITUSERNAME/REPONAME -> https://github.com/GITUSERNAME/REPONAME
+          url = `https://github.com/${segs[0]}/${segs[1]}`;
+        } else if (segs.length === 3) {
+          // GITUSERNAME/REPONAME/BRANCH -> https://github.com/GITUSERNAME/REPONAME/tree/BRANCH
+          url = `https://github.com/${segs[0]}/${segs[1]}/tree/${segs[2]}`;
+        } else if (segs.length === 4 && segs[2] === "tree") {
+          // GITUSERNAME/REPONAME/tree/BRANCH -> https://github.com/GITUSERNAME/REPONAME/tree/BRANCH
+          url = `https://github.com/${segs[0]}/${segs[1]}/tree/${segs[3]}`;
+        }
+      }
       try {
         setLoading(true);
         let res = null;
@@ -474,9 +493,9 @@ export default function Marketplace({ initialType }) {
       : `@${repo.owner}`;
 
     const confirm = await swalConfirm(
-      "Remove Repository?",
-      `Do you want to remove ${repoDisplayName}? Installed extensions from this repository will remain on your device.`,
-      "Remove",
+      "Delete Source?",
+      `Do you want to delete <code>${repoDisplayName}</code>? Installed extensions from this repository will remain on your device.`,
+      "Confirm",
     );
     if (!confirm.isConfirmed) return;
 
@@ -498,8 +517,8 @@ export default function Marketplace({ initialType }) {
 
       if (res && res.success) {
         swalSuccess(
-          "Repository Removed",
-          `Repository ${repoDisplayName} was removed from your marketplace.`,
+          "Repository Deleted",
+          `Repository <code>${repoDisplayName}</code> has been deleted.`,
         );
         fetchMarketplace();
       }
@@ -597,7 +616,7 @@ export default function Marketplace({ initialType }) {
               title="Add a custom extension repository"
             >
               <Plus size={16} />
-              <span>Add Repo</span>
+              <span>Add Source</span>
             </button>
 
             <button
@@ -606,7 +625,7 @@ export default function Marketplace({ initialType }) {
               title="Manage extension repositories"
             >
               <FolderGit2 size={16} />
-              <span>Repos ({repos.length})</span>
+              <span>Sources ({repos.length})</span>
             </button>
 
             {repos.length > 1 && (

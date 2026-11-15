@@ -16,6 +16,19 @@ import {
   Check,
   FolderOpen,
   RotateCcw,
+  ArrowLeft,
+  ChevronRight,
+  Sliders,
+  Tv,
+  BookOpen,
+  Film,
+  Play,
+  Sparkles,
+  Info,
+  History,
+  Palette,
+  Terminal,
+  FileText,
 } from "lucide-react";
 import { swalSuccess, swalError, swalConfirm } from "../../utils/swal";
 import { isMobileApp } from "../../utils/nativeBridge";
@@ -62,27 +75,161 @@ const ALL_SUBTITLE_LANGUAGES = [
 
 const SETTINGS_TABS = [
   "general",
+  "appearance",
   "anime",
   "manga",
-  "movies",
-  "player",
+  "tv",
+  "video",
   "tags",
-  "history",
+  "statistics",
   "changelog",
-  "about",
+  "resources",
+  "advanced",
+];
+
+const SETTINGS_CATEGORIES = [
+  {
+    id: "general",
+    label: "General",
+    desc: "Cache storage limit, cache clearing, and MyAnimeList profile integration.",
+    icon: Sliders,
+  },
+  {
+    id: "appearance",
+    label: "Appearance",
+    desc: "Theme presets, accent colors, catalog layout density, and pagination mode.",
+    icon: Palette,
+  },
+  {
+    id: "anime",
+    label: "Anime",
+    desc: "Provider scrapers, download speed floor, and media server naming scheme.",
+    icon: Tv,
+  },
+  {
+    id: "manga",
+    label: "Manga",
+    desc: "Manga source scrapers, reader layout options, and auto-scroll speed.",
+    icon: BookOpen,
+  },
+  {
+    id: "tv",
+    label: "TV",
+    desc: "Movies & series streaming scrapers, resolution quality, and download folder.",
+    icon: Film,
+  },
+  {
+    id: "video",
+    label: "Video",
+    desc: "Player engine, streaming buffers, audio tracks, and custom subtitle styles.",
+    icon: Play,
+  },
+  {
+    id: "tags",
+    label: "Tags",
+    desc: "Create, reorder, and organize custom tags for your local library.",
+    icon: Tag,
+  },
+  {
+    id: "statistics",
+    label: "Statistics",
+    desc: "Lifetime watch & read time statistics and recent activity history timeline.",
+    icon: History,
+  },
+  {
+    id: "changelog",
+    label: "Changelogs",
+    desc: "Application release notes, version history, and new feature updates.",
+    icon: FileText,
+  },
+  {
+    id: "resources",
+    label: "Resources",
+    desc: "Community Discord, legal disclaimer, and application information.",
+    icon: Sparkles,
+  },
+  {
+    id: "advanced",
+    label: "Advanced",
+    desc: "Developer mode toggle, session log files, and debug tools.",
+    icon: Terminal,
+  },
 ];
 
 const PREVIEW_SAMPLE_CARDS = [
   {
     id: 1,
+    malid: 55888,
+    image: "https://cdn.myanimelist.net/images/manga/2/261972.jpg",
     title:
       "Backstabbed in a Backwater Dungeon: My Trusted Companions Tried to Kill Me, but Thanks to the Gift of an Unlimited Gacha I Got LVL 9999 Friends and Am Out for Revenge on My Former Party Members and the World",
   },
-  { id: 2, title: "One Piece" },
-  { id: 3, title: "Frieren: Beyond Journey's End" },
-  { id: 4, title: "fullmetal alchemist: brotherhood" },
-  { id: 5, title: "Demon Slayer: Kimetsu no Yaiba Hashira Training Arc" },
-  { id: 6, title: "KochiKame: Tokyo Beat Cops" },
+  {
+    id: 2,
+    malid: 21,
+    image: "https://cdn.myanimelist.net/images/anime/1244/138851.jpg",
+    title: "One Piece",
+  },
+  {
+    id: 3,
+    malid: 52991,
+    image: "https://cdn.myanimelist.net/images/anime/1015/138006.jpg",
+    title: "Frieren: Beyond Journey's End",
+  },
+  {
+    id: 4,
+    malid: 5114,
+    image: "https://cdn.myanimelist.net/images/anime/1208/94745.jpg",
+    title: "Fullmetal Alchemist: Brotherhood",
+  },
+  {
+    id: 5,
+    malid: 54595,
+    image: "https://cdn.myanimelist.net/images/anime/1093/141870.jpg",
+    title: "Demon Slayer: Kimetsu no Yaiba Hashira Training Arc",
+  },
+  {
+    id: 6,
+    malid: 3545,
+    image: "https://cdn.myanimelist.net/images/anime/13/75601.jpg",
+    title: "KochiKame: Tokyo Beat Cops",
+  },
+  {
+    id: 7,
+    malid: 16498,
+    image: "https://cdn.myanimelist.net/images/anime/10/47347.jpg",
+    title: "Attack on Titan",
+  },
+  {
+    id: 8,
+    malid: 1535,
+    image: "https://cdn.myanimelist.net/images/anime/9/9453.jpg",
+    title: "Death Note",
+  },
+  {
+    id: 9,
+    malid: 11061,
+    image: "https://cdn.myanimelist.net/images/anime/11/39717.jpg",
+    title: "Hunter x Hunter (2011)",
+  },
+  {
+    id: 10,
+    malid: 30276,
+    image: "https://cdn.myanimelist.net/images/anime/12/76049.jpg",
+    title: "One Punch Man",
+  },
+  {
+    id: 11,
+    malid: 38000,
+    image: "https://cdn.myanimelist.net/images/anime/1286/99889.jpg",
+    title: "Demon Slayer: Kimetsu no Yaiba",
+  },
+  {
+    id: 12,
+    malid: 40748,
+    image: "https://cdn.myanimelist.net/images/anime/1171/109222.jpg",
+    title: "Jujutsu Kaisen",
+  },
 ];
 
 const PRESET_THEMES = [
@@ -134,7 +281,7 @@ const PRESET_THEMES = [
 ];
 
 export default function SettingsView({
-  initialTab = "general",
+  initialTab = null,
   scrollToSection = null,
   onSelectMedia,
   onSettingsSaved,
@@ -387,20 +534,32 @@ export default function SettingsView({
     return ext?.icon || null;
   };
 
+  const normalizeTab = (tab) => {
+    if (!tab) return null;
+    if (tab === "movies") return "tv";
+    if (tab === "player" || tab === "subtitles") return "video";
+    if (tab === "history") return "statistics";
+    if (tab === "changelogs") return "changelog";
+    if (tab === "about") return "resources";
+    if (tab === "anime_manga") return "anime";
+    return tab;
+  };
+
   const [hasChanges, setHasChanges] = useState(false);
-  const [activeTab, setActiveTab] = useState(() => {
-    if (initialTab === "anime_manga") return "anime";
-    return initialTab || "general";
-  });
+  const [activeTab, setActiveTab] = useState(() => normalizeTab(initialTab));
 
   useEffect(() => {
-    setActiveTab(
-      initialTab === "anime_manga" ? "anime" : initialTab || "general",
-    );
+    setActiveTab(normalizeTab(initialTab));
   }, [initialTab]);
 
   useEffect(() => {
     if (scrollToSection) {
+      if (
+        scrollToSection === "subtitle-customization" ||
+        scrollToSection.startsWith("player")
+      ) {
+        setActiveTab("video");
+      }
       const timer = setTimeout(() => {
         const el = document.getElementById(scrollToSection);
         if (el) {
@@ -409,25 +568,9 @@ export default function SettingsView({
       }, 250);
       return () => clearTimeout(timer);
     }
-  }, [scrollToSection, activeTab]);
+  }, [scrollToSection]);
 
   const touchStartRef = useRef({ x: 0, y: 0, time: 0 });
-  const tabsRowRef = useRef(null);
-
-  useEffect(() => {
-    if (tabsRowRef.current) {
-      const activeBtn = tabsRowRef.current.querySelector(
-        ".settings-tab-btn.active",
-      );
-      if (activeBtn) {
-        activeBtn.scrollIntoView({
-          behavior: "smooth",
-          inline: "center",
-          block: "nearest",
-        });
-      }
-    }
-  }, [activeTab]);
 
   const handleTouchStart = (e) => {
     if (!e.touches || e.touches.length !== 1) return;
@@ -494,7 +637,7 @@ export default function SettingsView({
   const [changelogLoading, setChangelogLoading] = useState(false);
 
   useEffect(() => {
-    if (activeTab === "history") {
+    if (activeTab === "statistics" || activeTab === "history") {
       const loadHistoryData = async () => {
         setStatsLoading(true);
         try {
@@ -518,7 +661,7 @@ export default function SettingsView({
   }, [activeTab]);
 
   useEffect(() => {
-    if (activeTab === "changelog") {
+    if (activeTab === "resources" || activeTab === "changelog") {
       const fetchChangelogData = async () => {
         if (!changelog) setChangelogLoading(true);
         try {
@@ -1361,7 +1504,25 @@ export default function SettingsView({
       <div className="settings-container-inner">
         <div className="settings-top-section">
           <header className="settings-header">
-            <h1 className="settings-title">App Settings</h1>
+            {activeTab ? (
+              <div className="settings-header-left">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab(null)}
+                  className="btn-back"
+                  title="Back to Settings"
+                >
+                  <ArrowLeft size={18} />
+                  <span>Back to Settings</span>
+                </button>
+                <h1 className="settings-title settings-title-category">
+                  {SETTINGS_CATEGORIES.find((c) => c.id === activeTab)?.label ||
+                    "Settings"}
+                </h1>
+              </div>
+            ) : (
+              <h1 className="settings-title">App Settings</h1>
+            )}
             <div className="u-style-66">
               {saving ? (
                 <>
@@ -1386,82 +1547,45 @@ export default function SettingsView({
               )}
             </div>
           </header>
-
-          {/* Horizontal Tabs Navigation */}
-          <div className="settings-tabs-row" ref={tabsRowRef}>
-            <button
-              type="button"
-              onClick={() => setActiveTab("general")}
-              className={`settings-tab-btn ${activeTab === "general" ? "active" : ""}`}
-            >
-              General & UI
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("anime")}
-              className={`settings-tab-btn ${activeTab === "anime" ? "active" : ""}`}
-            >
-              Anime Settings
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("manga")}
-              className={`settings-tab-btn ${activeTab === "manga" ? "active" : ""}`}
-            >
-              Manga Settings
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("movies")}
-              className={`settings-tab-btn ${activeTab === "movies" ? "active" : ""}`}
-            >
-              Movies & Series
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("player")}
-              className={`settings-tab-btn ${activeTab === "player" ? "active" : ""}`}
-            >
-              Player Settings
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("tags")}
-              className={`settings-tab-btn ${activeTab === "tags" ? "active" : ""}`}
-            >
-              Library Tags
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("history")}
-              className={`settings-tab-btn ${activeTab === "history" ? "active" : ""}`}
-            >
-              History & Stats
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("changelog")}
-              className={`settings-tab-btn ${activeTab === "changelog" ? "active" : ""}`}
-            >
-              Release Notes
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("about")}
-              className={`settings-tab-btn ${activeTab === "about" ? "active" : ""}`}
-            >
-              About & Disclaimer
-            </button>
-          </div>
         </div>
 
-        <form onSubmit={(e) => e.preventDefault()} className="settings-form">
+        {!activeTab ? (
+          <div className="settings-categories-container">
+            <div className="settings-categories-grid">
+              {SETTINGS_CATEGORIES.map((cat) => {
+                const IconComponent = cat.icon;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    className="settings-category-card glass-panel"
+                    onClick={() => setActiveTab(cat.id)}
+                  >
+                    <div className="settings-category-icon-box">
+                      <IconComponent size={22} />
+                    </div>
+                    <div className="settings-category-info">
+                      <h3 className="settings-category-name">{cat.label}</h3>
+                      <p className="settings-category-description">
+                        {cat.desc}
+                      </p>
+                    </div>
+                    <ChevronRight
+                      size={18}
+                      className="settings-category-chevron"
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={(e) => e.preventDefault()} className="settings-form">
           {activeTab === "general" && (
             <div className="settings-column">
-              {/* General Settings */}
-              <div className="settings-section glass-panel">
-                <h2 className="settings-section-title">General Settings</h2>
-                {isMobileApp() && (
+              {isMobileApp() && (
+                <div className="settings-section glass-panel">
+                  <h2 className="settings-section-title">Notifications</h2>
                   <SettingsRow
                     label="Download Notifications"
                     desc="Show active download progress notification in the Android status bar."
@@ -1478,35 +1602,71 @@ export default function SettingsView({
                       minWidth={200}
                     />
                   </SettingsRow>
-                )}
-                <SettingsRow
-                  label="Developer Mode"
-                  desc="Enable advanced logs viewer tab and debug utilities."
-                >
-                  <Dropdown
-                    value={String(developerMode)}
-                    onChange={(val) => setDeveloperMode(val === "true")}
-                    options={[
-                      { value: "true", label: "Enabled" },
-                      { value: "false", label: "Disabled" },
-                    ]}
-                    minWidth={200}
-                  />
-                </SettingsRow>
-                <SettingsRow
-                  label="Pagination Controls"
-                  desc="Toggle between numbered pages or infinite scroll loading."
-                >
-                  <Dropdown
-                    value={String(pagination)}
-                    onChange={(val) => setPagination(val === "true")}
-                    options={[
-                      { value: "true", label: "Enabled (Page Buttons)" },
-                      { value: "false", label: "Disabled (Infinite Scroll)" },
-                    ]}
-                    minWidth={200}
-                  />
-                </SettingsRow>
+                </div>
+              )}
+
+              {/* Storage */}
+              <div className="settings-section glass-panel">
+                <h2 className="settings-section-title">Storage</h2>
+
+                <div className="settings-row-item">
+                  <div className="settings-row-info">
+                    <div className="settings-row-label">
+                      Image Cache Size Limit
+                    </div>
+                    <div className="settings-row-hint">
+                      Maximum storage space allowed for external poster images.
+                      (Minimum 5 GB)
+                    </div>
+                  </div>
+                  <div className="settings-row-control u-style-72">
+                    <input
+                      type="number"
+                      min={5}
+                      value={imageCacheSizeLimit}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        setImageCacheSizeLimit(isNaN(val) ? "" : val);
+                      }}
+                      onBlur={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (isNaN(val) || val < 5) {
+                          setImageCacheSizeLimit(5);
+                        }
+                      }}
+                      className="settings-text-input settings-number-input u-style-73"
+                    />
+                    <span className="u-style-74">GB</span>
+                  </div>
+                </div>
+
+                <div className="settings-row-item">
+                  <div className="settings-row-info">
+                    <div className="settings-row-label">
+                      Current Cache Usage
+                    </div>
+                    <div className="settings-row-hint">
+                      {cacheStats
+                        ? `${((Number(cacheStats.sizeInBytes) || 0) / (1024 * 1024)).toFixed(1)} MB (${Number(cacheStats.filesCount) || 0} files)`
+                        : "Calculating..."}
+                    </div>
+                  </div>
+                  <div className="settings-row-control">
+                    <button
+                      type="button"
+                      onClick={handleClearCache}
+                      disabled={clearingCache}
+                      className="settings-logout-btn u-style-75"
+                    >
+                      {clearingCache ? (
+                        <Loader2 size={14} className="spin" />
+                      ) : (
+                        <Trash2 size={14} />
+                      )}
+                      <span>Clear Image Cache</span>
+                    </button>
+                  </div>
+                </div>
               </div>
               {/* MyAnimeList Connection */}
               <div className="settings-section glass-panel">
@@ -1614,7 +1774,7 @@ export default function SettingsView({
                           className="settings-connect-link u-style-81"
                         >
                           <LinkIcon size={16} />
-                          <span>Authenticate Account</span>
+                          <span style={{ position: "relative", top: "-2px" }}> Authenticate Account</span>
                         </a>
                       ) : (
                         <span className="u-style-82">OAuth URL Error</span>
@@ -1623,187 +1783,11 @@ export default function SettingsView({
                   </div>
                 )}
               </div>
-              {/* Catalog Layout & Appearance */}
-              <div className="settings-section glass-panel">
-                <h2 className="settings-section-title">
-                  Catalog Layout & Title Customization
-                </h2>
+            </div>
+          )}
 
-                <SettingsRow
-                  label="Catalog Items Per Row"
-                  desc="Control the density and number of cards displayed per row in the catalog grid."
-                >
-                  <div
-                    className="catalog-columns-picker"
-                    style={{ flexWrap: "wrap", gap: "6px" }}
-                  >
-                    {[
-                      "auto",
-                      "2",
-                      "3",
-                      "4",
-                      "5",
-                      "6",
-                      "7",
-                      "8",
-                      "9",
-                      "10",
-                      "12",
-                    ].map((col) => (
-                      <button
-                        key={col}
-                        type="button"
-                        className={`catalog-col-btn ${catalogColumns === col ? "active" : ""}`}
-                        onClick={() => handleCatalogColumnsChange(col)}
-                      >
-                        {col === "auto" ? "Auto" : col}
-                      </button>
-                    ))}
-                  </div>
-                </SettingsRow>
-
-                <SettingsRow
-                  label="Catalog Card Max Height"
-                  desc="Limit maximum height of poster images to avoid oversized cards on large displays."
-                >
-                  <Dropdown
-                    value={catalogCardMaxHeight}
-                    onChange={handleCatalogCardMaxHeightChange}
-                    options={[
-                      { value: "auto", label: "Auto (Uncapped)" },
-                      { value: "180px", label: "180px (Extra Compact)" },
-                      { value: "200px", label: "200px (Compact)" },
-                      { value: "240px", label: "240px" },
-                      { value: "280px", label: "280px" },
-                      { value: "320px", label: "320px (Default)" },
-                      { value: "360px", label: "360px" },
-                      { value: "400px", label: "400px" },
-                      { value: "440px", label: "440px (Tall)" },
-                      ...(![
-                        "auto",
-                        "180px",
-                        "200px",
-                        "240px",
-                        "280px",
-                        "320px",
-                        "360px",
-                        "400px",
-                        "440px",
-                      ].includes(catalogCardMaxHeight)
-                        ? [
-                            {
-                              value: catalogCardMaxHeight,
-                              label: `${catalogCardMaxHeight} (Custom)`,
-                            },
-                          ]
-                        : []),
-                    ]}
-                    minWidth={200}
-                  />
-                </SettingsRow>
-
-                <SettingsRow
-                  label="Catalog Title Font Size"
-                  desc="Adjust the font size of media item titles below poster images."
-                >
-                  <Dropdown
-                    value={String(catalogTitleFontSize)}
-                    onChange={handleCatalogTitleFontSizeChange}
-                    options={[
-                      { value: "11", label: "11px (Small)" },
-                      { value: "12", label: "12px" },
-                      { value: "13", label: "13px (Default)" },
-                      { value: "14", label: "14px" },
-                      { value: "15", label: "15px" },
-                      { value: "16", label: "16px (Large)" },
-                      { value: "18", label: "18px (Extra Large)" },
-                      ...(!["11", "12", "13", "14", "15", "16", "18"].includes(
-                        String(catalogTitleFontSize),
-                      )
-                        ? [
-                            {
-                              value: String(catalogTitleFontSize),
-                              label: `${catalogTitleFontSize}px (Custom)`,
-                            },
-                          ]
-                        : []),
-                    ]}
-                    minWidth={200}
-                  />
-                </SettingsRow>
-
-                <SettingsRow
-                  label="Catalog Title Lines"
-                  desc="Limit the maximum number of text lines shown for titles in the catalog."
-                >
-                  <Dropdown
-                    value={String(catalogTitleLines)}
-                    onChange={handleCatalogTitleLinesChange}
-                    options={[
-                      { value: "1", label: "1 Line" },
-                      { value: "2", label: "2 Lines (Default)" },
-                      { value: "3", label: "3 Lines" },
-                      { value: "4", label: "4 Lines" },
-                    ]}
-                    minWidth={200}
-                  />
-                </SettingsRow>
-
-                {/* Live Preview Box */}
-                <div className="catalog-preview-container">
-                  <div className="catalog-preview-header">
-                    <span className="catalog-preview-desc">
-                      Visual preview of how catalog cards appear with your
-                      current settings
-                    </span>
-                  </div>
-                  <div
-                    className="catalog-preview-grid"
-                    style={{
-                      gridTemplateColumns:
-                        catalogColumns === "auto"
-                          ? "repeat(auto-fill, minmax(max(130px, calc((100% - 5 * 10px) / 6)), 1fr))"
-                          : `repeat(${catalogColumns}, 1fr)`,
-                    }}
-                  >
-                    {PREVIEW_SAMPLE_CARDS.map((card) => (
-                      <div key={card.id} className="catalog-preview-card">
-                        <div
-                          className="catalog-preview-img-box"
-                          style={{
-                            maxHeight:
-                              catalogCardMaxHeight === "auto"
-                                ? undefined
-                                : catalogCardMaxHeight,
-                            height:
-                              catalogCardMaxHeight === "auto"
-                                ? undefined
-                                : catalogCardMaxHeight,
-                          }}
-                        >
-                          <img
-                            src="/images/image-404.png"
-                            alt="Preview Poster"
-                            className="catalog-preview-img"
-                          />
-                        </div>
-                        <div className="catalog-preview-info">
-                          <div
-                            className="catalog-preview-title"
-                            style={{
-                              fontSize: `${catalogTitleFontSize}px`,
-                              WebkitLineClamp: catalogTitleLines,
-                              maxHeight: `calc(${catalogTitleFontSize * 1.4}px * ${catalogTitleLines})`,
-                            }}
-                          >
-                            {card.title}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>{" "}
+          {activeTab === "appearance" && (
+            <div className="settings-column">
               {/* Custom Themes & Component Colors */}
               <div className="settings-section glass-panel">
                 <h2 className="settings-section-title">
@@ -1953,158 +1937,222 @@ export default function SettingsView({
                   </button>
                 </div>
               </div>
-              {/* Storage & Cache */}
+
+              {/* Catalog Layout & Appearance */}
               <div className="settings-section glass-panel">
-                <h2 className="settings-section-title">Storage & Cache</h2>
+                <h2 className="settings-section-title">
+                  Catalog Layout & Title Customization
+                </h2>
 
-                <div className="settings-row-item">
-                  <div className="settings-row-info">
-                    <div className="settings-row-label">
-                      Image Cache Size Limit
-                    </div>
-                    <div className="settings-row-hint">
-                      Maximum storage space allowed for external poster images.
-                      (Minimum 5 GB)
-                    </div>
-                  </div>
-                  <div className="settings-row-control u-style-72">
-                    <input
-                      type="number"
-                      min={5}
-                      value={imageCacheSizeLimit}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value, 10);
-                        setImageCacheSizeLimit(isNaN(val) ? "" : val);
-                      }}
-                      onBlur={(e) => {
-                        const val = parseInt(e.target.value, 10);
-                        if (isNaN(val) || val < 5) {
-                          setImageCacheSizeLimit(5);
-                        }
-                      }}
-                      className="settings-text-input settings-number-input u-style-73"
-                    />
-                    <span className="u-style-74">GB</span>
-                  </div>
-                </div>
-
-                <div className="settings-row-item">
-                  <div className="settings-row-info">
-                    <div className="settings-row-label">
-                      Current Cache Usage
-                    </div>
-                    <div className="settings-row-hint">
-                      {cacheStats
-                        ? `${((Number(cacheStats.sizeInBytes) || 0) / (1024 * 1024)).toFixed(1)} MB (${Number(cacheStats.filesCount) || 0} files)`
-                        : "Calculating..."}
-                    </div>
-                  </div>
-                  <div className="settings-row-control">
-                    <button
-                      type="button"
-                      onClick={handleClearCache}
-                      disabled={clearingCache}
-                      className="settings-logout-btn u-style-75"
-                    >
-                      {clearingCache ? (
-                        <Loader2 size={14} className="spin" />
-                      ) : (
-                        <Trash2 size={14} />
-                      )}
-                      <span>Clear Image Cache</span>
-                    </button>
-                  </div>
-                </div>
                 <SettingsRow
-                  label="Save Log Files"
-                  desc="Keep a log file per app session in a folder outside the app, useful for troubleshooting and sharing."
+                  label="Catalog Items Per Row"
+                  desc="Control the density and number of cards displayed per row in the catalog grid."
+                >
+                  <div
+                    className="catalog-columns-picker"
+                    style={{ flexWrap: "wrap", gap: "6px" }}
+                  >
+                    {[
+                      "auto",
+                      "2",
+                      "3",
+                      "4",
+                      "5",
+                      "6",
+                      "7",
+                      "8",
+                      "9",
+                      "10",
+                      "12",
+                    ].map((col) => (
+                      <button
+                        key={col}
+                        type="button"
+                        className={`catalog-col-btn ${catalogColumns === col ? "active" : ""}`}
+                        onClick={() => handleCatalogColumnsChange(col)}
+                      >
+                        {col === "auto" ? "Auto" : col}
+                      </button>
+                    ))}
+                  </div>
+                </SettingsRow>
+
+                <SettingsRow
+                  label="Catalog Card Max Height"
+                  desc="Limit maximum height of poster images to avoid oversized cards on large displays."
                 >
                   <Dropdown
-                    value={String(externalLogEnabled)}
-                    onChange={(val) => setExternalLogEnabled(val === "true")}
+                    value={catalogCardMaxHeight}
+                    onChange={handleCatalogCardMaxHeightChange}
                     options={[
-                      { value: "true", label: "Enabled" },
-                      { value: "false", label: "Disabled" },
+                      { value: "auto", label: "Auto (Uncapped)" },
+                      { value: "180px", label: "180px (Extra Compact)" },
+                      { value: "200px", label: "200px (Compact)" },
+                      { value: "240px", label: "240px" },
+                      { value: "280px", label: "280px" },
+                      { value: "320px", label: "320px (Default)" },
+                      { value: "360px", label: "360px" },
+                      { value: "400px", label: "400px" },
+                      { value: "440px", label: "440px (Tall)" },
+                      ...(![
+                        "auto",
+                        "180px",
+                        "200px",
+                        "240px",
+                        "280px",
+                        "320px",
+                        "360px",
+                        "400px",
+                        "440px",
+                      ].includes(catalogCardMaxHeight)
+                        ? [
+                            {
+                              value: catalogCardMaxHeight,
+                              label: `${catalogCardMaxHeight} (Custom)`,
+                            },
+                          ]
+                        : []),
                     ]}
                     minWidth={200}
                   />
                 </SettingsRow>
-                {externalLogEnabled && (
-                  <>
-                    <SettingsRow
-                      label="Kept Log Files"
-                      desc="How many recent log files to keep (1–10, default 5). Older files are deleted automatically and the total is kept under 500 MB."
-                    >
-                      <Dropdown
-                        value={String(maxLogFiles)}
-                        onChange={(val) =>
-                          setMaxLogFiles(parseInt(val, 10) || 5)
-                        }
-                        options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({
-                          value: String(n),
-                          label: `${n} file${n > 1 ? "s" : ""}`,
-                        }))}
-                        minWidth={200}
-                      />
-                    </SettingsRow>
-                    <SettingsRow
-                      label="Log Folder"
-                      desc="Where the log files are stored."
-                    >
-                      <input
-                        type="text"
-                        className="settings-text-input download-location-path"
-                        value={logDirectory}
-                        placeholder="Default log folder"
-                        readOnly
-                        title={logDirectory || "Default log folder"}
-                      />
-                    </SettingsRow>
-                  </>
-                )}
-              </div>
-              {/* Community & Support */}
-              <div className="settings-section glass-panel">
-                <h2 className="settings-section-title">Community & Support</h2>
-                <div className="settings-row-item">
-                  <div className="settings-row-info">
-                    <div className="settings-row-label">
-                      Discord Community Server
-                    </div>
-                    <div className="settings-row-hint">
-                      Join our Discord server to get help, request features, and
-                      stay up to date.
-                    </div>
+
+                <SettingsRow
+                  label="Catalog Title Font Size"
+                  desc="Adjust the font size of media item titles below poster images."
+                >
+                  <Dropdown
+                    value={String(catalogTitleFontSize)}
+                    onChange={handleCatalogTitleFontSizeChange}
+                    options={[
+                      { value: "11", label: "11px (Small)" },
+                      { value: "12", label: "12px" },
+                      { value: "13", label: "13px (Default)" },
+                      { value: "14", label: "14px" },
+                      { value: "15", label: "15px" },
+                      { value: "16", label: "16px (Large)" },
+                      { value: "18", label: "18px (Extra Large)" },
+                      ...(!["11", "12", "13", "14", "15", "16", "18"].includes(
+                        String(catalogTitleFontSize),
+                      )
+                        ? [
+                            {
+                              value: String(catalogTitleFontSize),
+                              label: `${catalogTitleFontSize}px (Custom)`,
+                            },
+                          ]
+                        : []),
+                    ]}
+                    minWidth={200}
+                  />
+                </SettingsRow>
+
+                <SettingsRow
+                  label="Catalog Title Lines"
+                  desc="Limit the maximum number of text lines shown for titles in the catalog."
+                >
+                  <Dropdown
+                    value={String(catalogTitleLines)}
+                    onChange={handleCatalogTitleLinesChange}
+                    options={[
+                      { value: "1", label: "1 Line" },
+                      { value: "2", label: "2 Lines (Default)" },
+                      { value: "3", label: "3 Lines" },
+                      { value: "4", label: "4 Lines" },
+                    ]}
+                    minWidth={200}
+                  />
+                </SettingsRow>
+
+                {/* Live Preview Box */}
+                <div className="catalog-preview-container">
+                  <div className="catalog-preview-header">
+                    <span className="catalog-preview-desc">
+                      Visual preview of how catalog cards appear with your
+                      current settings
+                    </span>
                   </div>
-                  <div className="settings-row-control">
-                    <a
-                      href="https://discord.gg/PzfUBgQ2gt"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        const targetUrl = "https://discord.gg/PzfUBgQ2gt";
-                        if (
-                          window.Capacitor &&
-                          window.Capacitor.Plugins &&
-                          window.Capacitor.Plugins.CloudflareBypass
-                        ) {
-                          window.Capacitor.Plugins.CloudflareBypass.openSystemBrowser(
-                            { url: targetUrl },
-                          ).catch(() => {
-                            window.open(targetUrl, "_blank");
-                          });
-                        } else {
-                          window.open(targetUrl, "_blank");
-                        }
-                      }}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="settings-connect-link u-style-76"
-                    >
-                      <DiscordIcon size={16} />
-                      <span>Join Discord</span>
-                    </a>
+                  <div
+                    className="catalog-preview-grid"
+                    style={{
+                      gridTemplateColumns:
+                        catalogColumns === "auto"
+                          ? "repeat(auto-fit, minmax(0, 1fr))"
+                          : `repeat(${catalogColumns}, 1fr)`,
+                      overflow: "hidden",
+                    }}
+                  >
+                    {PREVIEW_SAMPLE_CARDS.slice(
+                      0,
+                      Math.max(
+                        1,
+                        Math.min(
+                          catalogColumns === "auto"
+                            ? 6
+                            : parseInt(catalogColumns, 10) || 6,
+                          PREVIEW_SAMPLE_CARDS.length,
+                        ),
+                      ),
+                    ).map((card) => (
+                      <div key={card.id} className="catalog-preview-card">
+                        <div
+                          className="catalog-preview-img-box"
+                          style={{
+                            maxHeight:
+                              catalogCardMaxHeight === "auto"
+                                ? undefined
+                                : catalogCardMaxHeight,
+                            height:
+                              catalogCardMaxHeight === "auto"
+                                ? undefined
+                                : catalogCardMaxHeight,
+                          }}
+                        >
+                          <img
+                            src={`/api/image?url=${encodeURIComponent(card.image)}&malid=${card.malid}&title=${encodeURIComponent(card.title)}`}
+                            alt="Preview Poster"
+                            className="catalog-preview-img"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = "/images/image-404.png";
+                            }}
+                          />
+                        </div>
+                        <div className="catalog-preview-info">
+                          <div
+                            className="catalog-preview-title"
+                            style={{
+                              fontSize: `${catalogTitleFontSize}px`,
+                              WebkitLineClamp: catalogTitleLines,
+                              maxHeight: `calc(${catalogTitleFontSize * 1.4}px * ${catalogTitleLines})`,
+                            }}
+                          >
+                            {card.title}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
+              </div>
+
+              {/* Pagination */}
+              <div className="settings-section glass-panel">
+                <h2 className="settings-section-title">Pagination</h2>
+                <SettingsRow
+                  label="Pagination Controls"
+                  desc="Toggle between numbered pages or infinite scroll loading."
+                >
+                  <Dropdown
+                    value={String(pagination)}
+                    onChange={(val) => setPagination(val === "true")}
+                    options={[
+                      { value: "true", label: "Enabled (Page Buttons)" },
+                      { value: "false", label: "Disabled (Infinite Scroll)" },
+                    ]}
+                    minWidth={200}
+                  />
+                </SettingsRow>
               </div>
             </div>
           )}
@@ -2177,7 +2225,7 @@ export default function SettingsView({
 
                 <SettingsRow
                   label="Anime Download Location"
-                  desc="Where new anime episodes are saved. Takes effect for new downloads. Custom paths download anime files directly inside without creating an extra Anime subfolder."
+                  desc="Where new anime episodes are saved. Custom paths download anime files directly inside without creating an extra Anime subfolder."
                 >
                   <div className="download-location-picker">
                     <input
@@ -2457,7 +2505,7 @@ export default function SettingsView({
 
                 <SettingsRow
                   label="Manga Download Location"
-                  desc="Where new manga chapters are saved (.cbz archives). Takes effect for new downloads. Custom paths download manga files directly inside without creating an extra Manga subfolder."
+                  desc="Where new manga chapters are saved (.cbz archives). Custom paths download manga files directly inside without creating an extra Manga subfolder."
                 >
                   <div className="download-location-picker">
                     <input
@@ -2526,7 +2574,7 @@ export default function SettingsView({
             </div>
           )}
 
-          {activeTab === "movies" && (
+          {(activeTab === "tv" || activeTab === "movies") && (
             <div className="settings-column">
               {/* Provider Settings */}
               <div className="settings-section glass-panel">
@@ -2566,7 +2614,7 @@ export default function SettingsView({
 
                 <SettingsRow
                   label="Movies & Series Download Location"
-                  desc="Where downloaded movies and series are saved. Custom paths download video files directly inside without creating an extra MoviesSeries subfolder."
+                  desc="Where downloaded movies and series are saved. Custom paths download video files directly inside without creating subfolders."
                 >
                   <div className="download-location-picker">
                     <input
@@ -2665,7 +2713,7 @@ export default function SettingsView({
             </div>
           )}
 
-          {activeTab === "player" && (
+          {(activeTab === "video" || activeTab === "player") && (
             <div className="settings-column">
               {/* Playback & Streaming */}
               <div className="settings-section glass-panel">
@@ -3162,7 +3210,7 @@ export default function SettingsView({
               </div>
             </div>
           )}
-          {activeTab === "history" && (
+          {(activeTab === "statistics" || activeTab === "history") && (
             <div className="u-style-83">
               {statsLoading ? (
                 <div className="settings-loading-center">
@@ -3531,165 +3579,293 @@ export default function SettingsView({
           )}
 
           {activeTab === "changelog" && (
-            <div className="settings-panel glass-panel">
-              {changelogLoading ? (
-                <div className="settings-loading-center">
-                  <Loader2 size={32} className="spin" />
-                  <p>Loading release notes...</p>
+            <div className="settings-column">
+              {/* Release Notes (Changelog & Updates) */}
+              <div className="settings-section glass-panel">
+                <h2 className="settings-section-title">
+                  Release Notes & Updates
+                </h2>
+
+                <div className="settings-update-card" style={{ marginBottom: "16px" }}>
+                  <div className="settings-version-info">
+                    <span className="settings-version-label">Current Version</span>
+                    <span className="settings-version-value">
+                      v{appVersion || "9.5.0"}
+                    </span>
+                  </div>
+
+                  <div className="settings-update-action">
+                    {updateStatus === "idle" && (
+                      <button
+                        type="button"
+                        onClick={handleCheckForUpdates}
+                        className="update-btn-premium"
+                      >
+                        <RefreshCw size={13} />
+                        <span>Check for Updates</span>
+                      </button>
+                    )}
+
+                    {updateStatus === "checking" && (
+                      <div className="update-status-checking">
+                        <RefreshCw size={14} className="update-spin-icon" />
+                        <span>Checking for updates...</span>
+                      </div>
+                    )}
+
+                    {updateStatus === "up-to-date" && (
+                      <div className="update-status-uptodate">
+                        <span className="update-uptodate-badge">
+                          <Check size={14} /> Up to date
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleCheckForUpdates}
+                          className="update-btn-secondary"
+                        >
+                          Check Again
+                        </button>
+                      </div>
+                    )}
+
+                    {updateStatus === "ready" && (
+                      <button
+                        type="button"
+                        onClick={() => window.sharedStateAPI.installUpdate?.()}
+                        className="update-btn-ready"
+                      >
+                        <CheckCircle size={14} />
+                        <span>Update App</span>
+                      </button>
+                    )}
+
+                    {updateStatus === "error" && (
+                      <div className="update-status-error">
+                        <span className="update-error-text">Check failed</span>
+                        <button
+                          type="button"
+                          onClick={handleCheckForUpdates}
+                          className="update-btn-secondary"
+                        >
+                          Retry
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Inline Loading Progress Bar inside Settings tab */}
+                  {updateStatus === "downloading" && updateProgress && (
+                    <div className="update-progress-container">
+                      <div className="update-progress-header">
+                        <span>
+                          Downloading v{updateProgress.version || ""}...
+                        </span>
+                        <span>
+                          {Math.min(
+                            100,
+                            Math.max(0, updateProgress.percent || 0),
+                          ).toFixed(0)}
+                          %
+                          {updateProgress.bytesPerSecond > 0 &&
+                            ` (${(
+                              updateProgress.bytesPerSecond /
+                              (1024 * 1024)
+                            ).toFixed(2)} MB/s)`}
+                        </span>
+                      </div>
+                      <div className="update-progress-bar-bg">
+                        <div
+                          className="update-progress-bar-fill"
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              Math.max(0, updateProgress.percent || 0),
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {updateStatus === "error" && updateErrorMsg && (
+                    <div
+                      style={{
+                        color: "var(--danger)",
+                        fontSize: "12px",
+                        marginTop: "8px",
+                      }}
+                    >
+                      {updateErrorMsg}
+                    </div>
+                  )}
                 </div>
-              ) : changelog ? (
-                <ChangelogRenderer markdown={changelog} />
-              ) : (
-                <p className="u-style-29">Failed to load release notes.</p>
-              )}
+
+                {changelogLoading ? (
+                  <div className="settings-loading-center">
+                    <Loader2 size={32} className="spin" />
+                    <p>Loading release notes...</p>
+                  </div>
+                ) : changelog ? (
+                  <ChangelogRenderer markdown={changelog} />
+                ) : (
+                  <p className="u-style-29">Failed to load release notes.</p>
+                )}
+              </div>
             </div>
           )}
 
-          {activeTab === "about" && (
-            <div className="settings-panel glass-panel">
-              <h3 className="settings-section-title">
-                About & Legal Disclaimer
-              </h3>
-              <div className="disclaimer-text u-style-94">
-                <p>
-                  <strong>StrawVerse</strong> is an open-source local media
-                  manager and indexing application designed for developers and
-                  researchers.
-                </p>
-                <p>
-                  <strong>Disclaimer:</strong> The developers of this
-                  application do not host, store, stream, or distribute any
-                  copyrighted video, audio, or image files. The application
-                  functions solely as a client-side parser and downloader
-                  wrapper utilizing publicly available web resource links. We do
-                  not condone, promote, or encourage copyright infringement of
-                  any kind.
-                </p>
-                <p>
-                  By using this software, you agree that you are solely
-                  responsible for ensuring that your access, downloading, and
-                  usage of any media files complies with all applicable local,
-                  national, and international copyright laws, copyrights, and
-                  terms of service. The developers assume no liability for
-                  misuse, copyright violations, or data download charges.
-                </p>
+          {(activeTab === "resources" || activeTab === "about") && (
+            <div className="settings-column">
+              {/* Community & Support */}
+              <div className="settings-section glass-panel">
+                <h2 className="settings-section-title">Community & Support</h2>
+                <div className="settings-row-item">
+                  <div className="settings-row-info">
+                    <div className="settings-row-label">
+                      Discord Community Server
+                    </div>
+                    <div className="settings-row-hint">
+                      Join our Discord server to get help, request features, and
+                      stay up to date.
+                    </div>
+                  </div>
+                  <div className="settings-row-control">
+                    <a
+                      href="https://discord.gg/PzfUBgQ2gt"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const targetUrl = "https://discord.gg/PzfUBgQ2gt";
+                        if (
+                          window.Capacitor &&
+                          window.Capacitor.Plugins &&
+                          window.Capacitor.Plugins.CloudflareBypass
+                        ) {
+                          window.Capacitor.Plugins.CloudflareBypass.openSystemBrowser(
+                            { url: targetUrl },
+                          ).catch(() => {
+                            window.open(targetUrl, "_blank");
+                          });
+                        } else {
+                          window.open(targetUrl, "_blank");
+                        }
+                      }}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="settings-connect-link u-style-76"
+                    >
+                      <DiscordIcon size={16} />
+                      <span>Join Discord</span>
+                    </a>
+                  </div>
+                </div>
               </div>
 
-              <div className="settings-update-card">
-                <div className="settings-version-info">
-                  <span className="settings-version-label">Version</span>
-                  <span className="settings-version-value">
-                    v{appVersion || "9.5.0"}
-                  </span>
+              {/* About & Legal Disclaimer */}
+              <div className="settings-section glass-panel">
+                <h2 className="settings-section-title">
+                  About & Legal Disclaimer
+                </h2>
+                <div className="disclaimer-text u-style-94">
+                  <p>
+                    <strong>StrawVerse</strong> is an open-source local media
+                    manager and indexing application designed for developers and
+                    researchers.
+                  </p>
+                  <p>
+                    <strong>Disclaimer:</strong> The developers of this
+                    application do not host, store, stream, or distribute any
+                    copyrighted video, audio, or image files. The application
+                    functions solely as a client-side parser and downloader
+                    wrapper utilizing publicly available web resource links. We do
+                    not condone, promote, or encourage copyright infringement of
+                    any kind.
+                  </p>
+                  <p>
+                    By using this software, you agree that you are solely
+                    responsible for ensuring that your access, downloading, and
+                    usage of any media files complies with all applicable local,
+                    national, and international copyright laws, copyrights, and
+                    terms of service. The developers assume no liability for
+                    misuse, copyright violations, or data download charges.
+                  </p>
                 </div>
+              </div>
+            </div>
+          )}
 
-                <div className="settings-update-action">
-                  {updateStatus === "idle" && (
-                    <button
-                      type="button"
-                      onClick={handleCheckForUpdates}
-                      className="update-btn-premium"
+          {activeTab === "advanced" && (
+            <div className="settings-column">
+              <div className="settings-section glass-panel">
+                <h2 className="settings-section-title">Developer Mode</h2>
+                <SettingsRow
+                  label="Developer Mode"
+                  desc="Enable developer inspection tools, extended debug logs, and experimental developer settings."
+                >
+                  <Dropdown
+                    value={String(developerMode)}
+                    onChange={(val) => setDeveloperMode(val === "true")}
+                    options={[
+                      { value: "true", label: "Enabled" },
+                      { value: "false", label: "Disabled" },
+                    ]}
+                    minWidth={200}
+                  />
+                </SettingsRow>
+              </div>
+
+              <div className="settings-section glass-panel">
+                <h2 className="settings-section-title">Logging & Diagnostics</h2>
+                <SettingsRow
+                  label="Save Log Files"
+                  desc="Keep a log file per app session in a folder outside the app, useful for troubleshooting and sharing."
+                >
+                  <Dropdown
+                    value={String(externalLogEnabled)}
+                    onChange={(val) => setExternalLogEnabled(val === "true")}
+                    options={[
+                      { value: "true", label: "Enabled" },
+                      { value: "false", label: "Disabled" },
+                    ]}
+                    minWidth={200}
+                  />
+                </SettingsRow>
+                {externalLogEnabled && (
+                  <>
+                    <SettingsRow
+                      label="Kept Log Files"
+                      desc="How many recent log files to keep (1–10, default 5). Older files are deleted automatically and the total is kept under 500 MB."
                     >
-                      <RefreshCw size={13} />
-                      <span>Check for Updates</span>
-                    </button>
-                  )}
-
-                  {updateStatus === "checking" && (
-                    <div className="update-status-checking">
-                      <RefreshCw size={14} className="update-spin-icon" />
-                      <span>Checking for updates...</span>
-                    </div>
-                  )}
-
-                  {updateStatus === "up-to-date" && (
-                    <div className="update-status-uptodate">
-                      <span className="update-uptodate-badge">
-                        <Check size={14} /> Up to date
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleCheckForUpdates}
-                        className="update-btn-secondary"
-                      >
-                        Check Again
-                      </button>
-                    </div>
-                  )}
-
-                  {updateStatus === "ready" && (
-                    <button
-                      type="button"
-                      onClick={() => window.sharedStateAPI.installUpdate?.()}
-                      className="update-btn-ready"
-                    >
-                      <CheckCircle size={14} />
-                      <span>Update App</span>
-                    </button>
-                  )}
-
-                  {updateStatus === "error" && (
-                    <div className="update-status-error">
-                      <span className="update-error-text">Check failed</span>
-                      <button
-                        type="button"
-                        onClick={handleCheckForUpdates}
-                        className="update-btn-secondary"
-                      >
-                        Retry
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Inline Loading Progress Bar inside Settings tab */}
-                {updateStatus === "downloading" && updateProgress && (
-                  <div className="update-progress-container">
-                    <div className="update-progress-header">
-                      <span>
-                        Downloading v{updateProgress.version || ""}...
-                      </span>
-                      <span>
-                        {Math.min(
-                          100,
-                          Math.max(0, updateProgress.percent || 0),
-                        ).toFixed(0)}
-                        %
-                        {updateProgress.bytesPerSecond > 0 &&
-                          ` (${(
-                            updateProgress.bytesPerSecond /
-                            (1024 * 1024)
-                          ).toFixed(2)} MB/s)`}
-                      </span>
-                    </div>
-                    <div className="update-progress-bar-bg">
-                      <div
-                        className="update-progress-bar-fill"
-                        style={{
-                          width: `${Math.min(
-                            100,
-                            Math.max(0, updateProgress.percent || 0),
-                          )}%`,
-                        }}
+                      <Dropdown
+                        value={String(maxLogFiles)}
+                        onChange={(val) =>
+                          setMaxLogFiles(parseInt(val, 10) || 5)
+                        }
+                        options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({
+                          value: String(n),
+                          label: `${n} file${n > 1 ? "s" : ""}`,
+                        }))}
+                        minWidth={200}
                       />
-                    </div>
-                  </div>
-                )}
-                {updateStatus === "error" && updateErrorMsg && (
-                  <div
-                    style={{
-                      color: "var(--danger)",
-                      fontSize: "12px",
-                      marginTop: "8px",
-                    }}
-                  >
-                    {updateErrorMsg}
-                  </div>
+                    </SettingsRow>
+                    <SettingsRow
+                      label="Log Folder"
+                      desc="Where the log files are stored."
+                    >
+                      <input
+                        type="text"
+                        className="settings-text-input download-location-path"
+                        value={logDirectory}
+                        placeholder="Default log folder"
+                        readOnly
+                        title={logDirectory || "Default log folder"}
+                      />
+                    </SettingsRow>
+                  </>
                 )}
               </div>
             </div>
           )}
         </form>
+        )}
       </div>
     </div>
   );

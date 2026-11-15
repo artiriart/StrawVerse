@@ -703,7 +703,7 @@ export default function App() {
       case "settings":
         return (
           <SettingsView
-            initialTab={current.params?.tab || "general"}
+            initialTab={current.params?.tab || null}
             scrollToSection={current.params?.scrollTo || null}
             onMarketplaceOpen={(initialType) =>
               navigateTo("marketplace", { type: initialType })

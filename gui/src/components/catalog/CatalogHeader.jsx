@@ -46,7 +46,7 @@ export default function CatalogHeader({
                 onClick={() => onSubTabChange && onSubTabChange("calendar")}
                 className={`discover-sub-tab ${discoverTab === "calendar" ? "active" : ""}`}
               >
-                Airing Calendar
+                Airing
               </button>
             </div>
           )}
